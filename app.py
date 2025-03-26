@@ -49,7 +49,9 @@ vectorstore = LangchainPinecone(
     embedding=embeddings,
     text_key="text"  # or whatever key you're using for the text content
 )
-retriever = vectorstore.as_retriever()
+retriever = vectorstore.as_retriever(
+    search_kwargs={"k": int(os.getenv("RETRIEVER_K", "4"))}
+)
 
 # Create a prompt template
 prompt = PromptTemplate.from_template("""
@@ -69,7 +71,9 @@ document_chain = create_stuff_documents_chain(
 qa_chain = create_retrieval_chain(retriever, document_chain)
 
 # Simple reranker based on similarity scores
-def rerank_documents(docs, query, top_k=5):
+def rerank_documents(docs, query, top_k=None):
+    if top_k is None:
+        top_k = int(os.getenv("RETRIEVER_K", "4"))
     scores = [(doc, doc.metadata.get('score', 0)) for doc in docs]
     scores.sort(key=lambda x: x[1], reverse=True)
     return [doc for doc, score in scores[:top_k]]
