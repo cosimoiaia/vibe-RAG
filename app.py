@@ -8,7 +8,6 @@ from langchain_groq import ChatGroq
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import PyPDFLoader
 from langchain.retrievers import BM25Retriever
-from PyPDF2 import PdfReader
 import io
 from dotenv import load_dotenv
 import os
@@ -80,6 +79,7 @@ def rerank_documents(docs, query, top_k=None):
 
 # Function to handle file uploads
 def handle_file_upload(file):
+    # Load and process the PDF directly from the file object
     loader = PyPDFLoader(file)
     documents = loader.load_and_split()
     texts = [doc.page_content for doc in documents]
