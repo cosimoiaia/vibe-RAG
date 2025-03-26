@@ -1,0 +1,8 @@
+streamlit
+langchain
+pinecone-client
+openai
+groq-client
+PyMuPDF
+python-dotenv
+PyPDF2
