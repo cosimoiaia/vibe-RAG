@@ -1,41 +1,72 @@
 import streamlit as st
-import pinecone
-from langchain.vectorstores import Pinecone
+from pinecone import Pinecone, ServerlessSpec
+from langchain.vectorstores import Pinecone as LangchainPinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.chains import RetrievalQA
-from langchain.llms import Groq
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_groq import ChatGroq
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import PyPDFLoader
-from langchain.chains.qa_with_sources import QASourceChain
 from langchain.retrievers import BM25Retriever
 from PyPDF2 import PdfReader
 import io
 from dotenv import load_dotenv
 import os
+from langchain.prompts import PromptTemplate
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Initialize Pinecone
-pinecone.init(api_key=os.getenv("PINECONE_API_KEY"), environment=os.getenv("PINECONE_ENVIRONMENT"))
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 
 # Initialize embeddings
-embeddings = OpenAIEmbeddings()
+embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
 
-# Initialize Pinecone index
+# Initialize Pinecone index with correct ServerlessSpec usage
 index_name = "vibe-rag"
-if index_name not in pinecone.list_indexes():
-    pinecone.create_index(index_name, dimension=1536)
-index = pinecone.Index(index_name)
+if index_name not in pc.list_indexes().names():
+    pc.create_index(
+        name=index_name,
+        dimension=1536,
+        metric='cosine',
+        spec=ServerlessSpec(
+            cloud='aws',
+            region='us-east-1'
+        )
+    )
+index = pc.Index(index_name)
 
-# Initialize Groq LLM
-llm = Groq(api_key=os.getenv("GROQ_API_KEY"))
+# Initialize Groq LLM with the latest model
+llm = ChatGroq(
+    api_key=os.getenv("GROQ_API_KEY"),
+    model_name="llama-3.3-70b-versatile"
+)
 
 # Define the retriever
-retriever = Pinecone.from_existing_index(index_name, embeddings)
+vectorstore = LangchainPinecone(
+    index=index,
+    embedding=embeddings,
+    text_key="text"  # or whatever key you're using for the text content
+)
+retriever = vectorstore.as_retriever()
 
-# Define the chain
-qa_chain = RetrievalQA.from_chain_type(llm, chain_type="stuff", retriever=retriever)
+# Create a prompt template
+prompt = PromptTemplate.from_template("""
+Answer the following question based on the provided context:
+
+Context: {context}
+Question: {input}
+
+Answer:""")
+
+# Define the document chain with the prompt
+document_chain = create_stuff_documents_chain(
+    llm,
+    prompt=prompt
+)
+
+qa_chain = create_retrieval_chain(retriever, document_chain)
 
 # Simple reranker based on similarity scores
 def rerank_documents(docs, query, top_k=5):
@@ -70,8 +101,10 @@ query = st.text_input("Ask a question:")
 if st.button("Submit"):
     docs = retriever.get_relevant_documents(query)
     reranked_docs = rerank_documents(docs, query)
-    result = qa_chain({"input_documents": reranked_docs, "question": query})
-    st.session_state.history.append((query, result['answer'], result['source_documents']))
+    result = qa_chain.invoke({
+        "input": query
+    })
+    st.session_state.history.append((query, result['answer'], docs))
     
 for query, answer, sources in st.session_state.history:
     st.markdown(f"**Question:** {query}")

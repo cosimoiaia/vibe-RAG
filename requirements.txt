@@ -1,6 +1,6 @@
 streamlit
 langchain
-pinecone-client
+pinecone
 openai
 groq-client
 PyMuPDF
