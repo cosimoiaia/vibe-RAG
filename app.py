@@ -1,7 +1,7 @@
 import streamlit as st
 from pinecone import Pinecone, ServerlessSpec
 from langchain.vectorstores import Pinecone as LangchainPinecone
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_groq import ChatGroq
@@ -19,15 +19,15 @@ load_dotenv()
 # Initialize Pinecone
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 
-# Initialize embeddings
-embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize embeddings with HuggingFace
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 # Initialize Pinecone index with correct ServerlessSpec usage
 index_name = "vibe-rag"
 if index_name not in pc.list_indexes().names():
     pc.create_index(
         name=index_name,
-        dimension=1536,
+        dimension=384,
         metric='cosine',
         spec=ServerlessSpec(
             cloud='aws',
@@ -79,14 +79,26 @@ def rerank_documents(docs, query, top_k=None):
 
 # Function to handle file uploads
 def handle_file_upload(file):
-    # Load and process the PDF directly from the file object
-    loader = PyPDFLoader(file)
-    documents = loader.load_and_split()
-    texts = [doc.page_content for doc in documents]
-    metadatas = [{"source": doc.metadata["source"]} for doc in documents]
-    vectors = embeddings.embed_documents(texts)
-    ids = [str(i) for i in range(len(texts))]
-    index.upsert(vectors=vectors, ids=ids, metadata=metadatas)
+    # Create a unique temporary filename using the original filename
+    temp_filename = f"temp_{file.name}"
+    
+    try:
+        # Save the uploaded file temporarily
+        with open(temp_filename, "wb") as f:
+            f.write(file.getvalue())
+        
+        # Load and process the PDF
+        loader = PyPDFLoader(temp_filename)
+        documents = loader.load_and_split()
+        texts = [doc.page_content for doc in documents]
+        metadatas = [{"source": doc.metadata["source"]} for doc in documents]
+        vectors = embeddings.embed_documents(texts)
+        ids = [str(i) for i in range(len(texts))]
+        index.upsert(vectors=vectors, ids=ids, metadata=metadatas)
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
 
 # Streamlit app
 st.title("Vibe-RAG")
