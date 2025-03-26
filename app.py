@@ -40,7 +40,7 @@ index = pc.Index(index_name)
 # Initialize Groq LLM with the latest model
 llm = ChatGroq(
     api_key=os.getenv("GROQ_API_KEY"),
-    model_name="llama-3.3-70b-versatile"
+    model_name=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 )
 
 # Define the retriever
