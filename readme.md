@@ -12,6 +12,7 @@ Vibe-RAG combines the power of large language models with efficient document ret
 - 🔍 **Source Attribution:** View the specific document sections used to generate answers
 - 🚀 **Fast Response Times:** Powered by Groq's high-performance LLM API
 - 🔒 **Secure Document Processing:** Your documents are processed securely and stored in Pinecone's vector database
+- 🤖 **Efficient Embeddings:** Uses HuggingFace's sentence-transformers for document embeddings
 
 ## Technology Stack
 
@@ -20,6 +21,7 @@ Vibe-RAG combines the power of large language models with efficient document ret
 - **Language Model:** Groq
 - **Document Processing:** LangChain
 - **PDF Processing:** PyPDF2
+- **Embeddings:** HuggingFace (sentence-transformers) with all-MiniLM-L6-v2 model
 
 ## Prerequisites
 
@@ -39,9 +41,15 @@ Vibe-RAG combines the power of large language models with efficient document ret
 2. **Set Up Environment Variables:**
    Create a `.env` file in the project root with the following content:
    ```
-   PINECONE_API_KEY=your-pinecone-api-key
-   PINECONE_ENVIRONMENT=your-pinecone-env
-   GROQ_API_KEY=your-groq-api-key
+   PINECONE_API_KEY=your-pinecone-api-key-here
+   PINECONE_ENVIRONMENT=your-pinecone-environment-here  # e.g., gcp-starter, us-west1-gcp-free, etc.
+   GROQ_API_KEY=your-groq-api-key-here
+
+   # Optional: Configure the number of documents to retrieve (default: 4)
+   # RETRIEVER_K=4
+
+   # Optional: Configure the model to use (default: llama-3.3-70b-versatile)
+   # GROQ_MODEL=llama-3.3-70b-versatile
    ```
 
 3. **Install Dependencies:**
@@ -86,4 +94,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Vector storage powered by [Pinecone](https://www.pinecone.io/)
 - LLM API provided by [Groq](https://groq.com/)
 - UI framework by [Streamlit](https://streamlit.io/)
+- Embeddings powered by [HuggingFace](https://huggingface.co/) and [sentence-transformers](https://www.sbert.net/)
 
