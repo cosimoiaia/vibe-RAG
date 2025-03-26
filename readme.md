@@ -1,28 +1,43 @@
-### Vibe-RAG
+# Vibe-RAG
 
-**Vibe-RAG** is a Retrieval-Augmented Generation (RAG) application built using LangChain, Pinecone for the vector database, Streamlit for the user interface, and Groq for the Language Model API. This application allows users to upload PDF documents, ask questions, and receive answers based on the content of the uploaded documents. The app also provides the sources used to generate the answers.
+A powerful Retrieval-Augmented Generation (RAG) application that enables users to interact with their PDF documents through natural language queries. Built with modern AI technologies and a user-friendly interface.
 
-#### Features
-- **Drag-and-Drop PDF Upload:** Easily upload PDF documents to the application.
-- **Chat Interface:** Ask questions and receive answers based on the uploaded documents.
-- **Source Attribution:** View the sources used to generate the answers.
+## Overview
 
-#### Prerequisites
+Vibe-RAG combines the power of large language models with efficient document retrieval to provide accurate, context-aware answers to questions about your PDF documents. The application features a clean, intuitive interface and provides source attribution for all generated answers.
+
+### Key Features
+- 📄 **Drag-and-Drop PDF Upload:** Seamlessly upload and process PDF documents
+- 💬 **Interactive Chat Interface:** Ask questions and receive context-aware answers
+- 🔍 **Source Attribution:** View the specific document sections used to generate answers
+- 🚀 **Fast Response Times:** Powered by Groq's high-performance LLM API
+- 🔒 **Secure Document Processing:** Your documents are processed securely and stored in Pinecone's vector database
+
+## Technology Stack
+
+- **Frontend:** Streamlit
+- **Vector Database:** Pinecone
+- **Language Model:** Groq
+- **Document Processing:** LangChain
+- **PDF Processing:** PyPDF2
+
+## Prerequisites
+
 - Python 3.7 or higher
-- API keys for Pinecone and Groq
+- API keys for:
+  - Pinecone
+  - Groq
 
-#### Installation
+## Installation
 
-1. **Clone the Repository (Optional):**
-   If you have the files locally, you can skip this step. Otherwise, clone the repository:
+1. **Clone the Repository:**
    ```bash
    git clone https://github.com/cosimoiaia/vibe-rag.git
    cd vibe-rag
    ```
 
-2. **Create a `.env` File:**
-   Save the following content in a file named `.env`:
-
+2. **Set Up Environment Variables:**
+   Create a `.env` file in the project root with the following content:
    ```
    PINECONE_API_KEY=your-pinecone-api-key
    PINECONE_ENVIRONMENT=your-pinecone-env
@@ -30,30 +45,45 @@
    ```
 
 3. **Install Dependencies:**
-   Open a terminal, navigate to the directory where `requirements.txt` and `.env` are located, and run the following command to install the dependencies:
-
    ```bash
    pip install -r requirements.txt
    ```
 
-#### Running the Application
+## Usage
 
-1. **Run the Streamlit App:**
-   Open a terminal, navigate to the directory where `app.py`, `requirements.txt`, and `.env` are located, and run the following command:
-
+1. **Start the Application:**
    ```bash
    streamlit run app.py
    ```
 
-2. **Interact with the App:**
-   - **Upload PDFs:** Use the drag-and-drop interface to upload PDF documents.
-   - **Ask Questions:** Enter your questions in the text input box and click "Submit" to get answers.
-   - **View Sources:** The app will display the answers along with the sources used to generate the answers.
+2. **Using the Application:**
+   - Upload PDF documents using the drag-and-drop interface
+   - Type your questions in the chat input
+   - View answers with source citations
+   - Track conversation history
 
-#### Notes
-- **API Keys:** Ensure you have valid API keys for Pinecone and Groq and replace `your-pinecone-api-key`, `your-pinecone-env`, and `your-groq-api-key` in the `.env` file with your actual API keys.
-- **Reranker:** The reranker is a simple implementation that sorts documents based on similarity scores. You can enhance it using more sophisticated techniques if needed.
+## Project Structure
 
-#### License
+```
+vibe-rag/
+├── app.py              # Main Streamlit application
+├── requirements.txt    # Project dependencies
+├── .env               # Environment variables (create this)
+└── README.md          # Project documentation
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [LangChain](https://www.langchain.com/)
+- Vector storage powered by [Pinecone](https://www.pinecone.io/)
+- LLM API provided by [Groq](https://groq.com/)
+- UI framework by [Streamlit](https://streamlit.io/)
 
