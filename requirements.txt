@@ -1,9 +1,8 @@
 streamlit
 langchain
 pinecone
-openai
 groq-client
 PyMuPDF
 python-dotenv
-PyPDF2
 pypdf
+sentence-transformers
