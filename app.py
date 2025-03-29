@@ -1,6 +1,7 @@
 import streamlit as st
-from pinecone import Pinecone, ServerlessSpec
-from langchain.vectorstores import Pinecone as LangchainPinecone
+from qdrant_client import QdrantClient
+from qdrant_client.http import models
+from langchain.vectorstores import Qdrant
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -16,25 +17,34 @@ from langchain.prompts import PromptTemplate
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize Pinecone
-pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+# Initialize Qdrant client
+qdrant_client = QdrantClient(
+    url=os.getenv("QDRANT_URL", "http://localhost:6333"),
+    api_key=os.getenv("QDRANT_API_KEY", None)
+)
 
 # Initialize embeddings with HuggingFace
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-# Initialize Pinecone index with correct ServerlessSpec usage
-index_name = "vibe-rag"
-if index_name not in pc.list_indexes().names():
-    pc.create_index(
-        name=index_name,
-        dimension=384,
-        metric='cosine',
-        spec=ServerlessSpec(
-            cloud='aws',
-            region='us-east-1'
+# Initialize Qdrant collection
+collection_name = "vibe-rag"
+try:
+    qdrant_client.get_collection(collection_name)
+except:
+    qdrant_client.create_collection(
+        collection_name=collection_name,
+        vectors_config=models.VectorParams(
+            size=384,
+            distance=models.Distance.COSINE
         )
     )
-index = pc.Index(index_name)
+
+# Initialize Qdrant vectorstore
+vectorstore = Qdrant(
+    client=qdrant_client,
+    collection_name=collection_name,
+    embeddings=embeddings
+)
 
 # Initialize Groq LLM with the latest model
 llm = ChatGroq(
@@ -43,11 +53,6 @@ llm = ChatGroq(
 )
 
 # Define the retriever
-vectorstore = LangchainPinecone(
-    index=index,
-    embedding=embeddings,
-    text_key="text"  # or whatever key you're using for the text content
-)
 retriever = vectorstore.as_retriever(
     search_kwargs={"k": int(os.getenv("RETRIEVER_K", "4"))}
 )
@@ -90,11 +95,9 @@ def handle_file_upload(file):
         # Load and process the PDF
         loader = PyPDFLoader(temp_filename)
         documents = loader.load_and_split()
-        texts = [doc.page_content for doc in documents]
-        metadatas = [{"source": doc.metadata["source"]} for doc in documents]
-        vectors = embeddings.embed_documents(texts)
-        ids = [str(i) for i in range(len(texts))]
-        index.upsert(vectors=vectors, ids=ids, metadata=metadatas)
+        
+        # Use the LangChain Qdrant wrapper to add documents
+        vectorstore.add_documents(documents)
     finally:
         # Clean up the temporary file
         if os.path.exists(temp_filename):
@@ -126,3 +129,4 @@ for query, answer, sources in st.session_state.history:
     st.markdown(f"**Question:** {query}")
     st.markdown(f"**Answer:** {answer}")
     st.markdown(f"**Sources:** {', '.join([doc.metadata['source'] for doc in sources])}")
+

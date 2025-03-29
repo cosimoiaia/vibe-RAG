@@ -11,13 +11,13 @@ Vibe-RAG combines the power of large language models with efficient document ret
 - 💬 **Interactive Chat Interface:** Ask questions and receive context-aware answers
 - 🔍 **Source Attribution:** View the specific document sections used to generate answers
 - 🚀 **Fast Response Times:** Powered by Groq's high-performance LLM API
-- 🔒 **Secure Document Processing:** Your documents are processed securely and stored in Pinecone's vector database
+- 🔒 **Secure Document Processing:** Your documents are processed securely and stored in Qdrant Cloud
 - 🤖 **Efficient Embeddings:** Uses HuggingFace's sentence-transformers for document embeddings
 
 ## Technology Stack
 
 - **Frontend:** Streamlit
-- **Vector Database:** Pinecone
+- **Vector Database:** Qdrant Cloud
 - **Language Model:** Groq
 - **Document Processing:** LangChain
 - **PDF Processing:** PyPDF2
@@ -27,7 +27,7 @@ Vibe-RAG combines the power of large language models with efficient document ret
 
 - Python 3.7 or higher
 - API keys for:
-  - Pinecone
+  - Qdrant Cloud
   - Groq
 
 ## Installation
@@ -41,8 +41,8 @@ Vibe-RAG combines the power of large language models with efficient document ret
 2. **Set Up Environment Variables:**
    Create a `.env` file in the project root with the following content:
    ```
-   PINECONE_API_KEY=your-pinecone-api-key-here
-   PINECONE_ENVIRONMENT=your-pinecone-environment-here  # e.g., gcp-starter, us-west1-gcp-free, etc.
+   QDRANT_URL=your-qdrant-cloud-url-here
+   QDRANT_API_KEY=your-qdrant-api-key-here
    GROQ_API_KEY=your-groq-api-key-here
 
    # Optional: Configure the number of documents to retrieve (default: 4)
@@ -77,7 +77,7 @@ vibe-rag/
 ├── app.py              # Main Streamlit application
 ├── requirements.txt    # Project dependencies
 ├── .env               # Environment variables (create this)
-└── README.md          # Project documentation
+└── readme.md          # Project documentation
 ```
 
 ## Contributing
@@ -91,7 +91,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Built with [LangChain](https://www.langchain.com/)
-- Vector storage powered by [Pinecone](https://www.pinecone.io/)
+- Vector storage powered by [Qdrant Cloud](https://cloud.qdrant.io/)
 - LLM API provided by [Groq](https://groq.com/)
 - UI framework by [Streamlit](https://streamlit.io/)
 - Embeddings powered by [HuggingFace](https://huggingface.co/) and [sentence-transformers](https://www.sbert.net/)
