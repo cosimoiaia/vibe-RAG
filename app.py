@@ -1,14 +1,13 @@
 import streamlit as st
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-from langchain.vectorstores import Qdrant
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langgraph.graph import StateGraph
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Qdrant
 from langchain_groq import ChatGroq
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import PyPDFLoader
-from langchain.retrievers import BM25Retriever
+from langchain_community.document_loaders import PyPDFLoader
+from typing import Dict, List, Tuple, TypedDict, Annotated
 import io
 from dotenv import load_dotenv
 import os
@@ -46,18 +45,21 @@ vectorstore = Qdrant(
     embeddings=embeddings
 )
 
-# Initialize Groq LLM with the latest model
+# Initialize Groq LLM
 llm = ChatGroq(
     api_key=os.getenv("GROQ_API_KEY"),
     model_name=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 )
 
-# Define the retriever
-retriever = vectorstore.as_retriever(
-    search_kwargs={"k": int(os.getenv("RETRIEVER_K", "4"))}
-)
+# Define state types
+class AgentState(TypedDict):
+    messages: List[Dict]
+    documents: List[Dict]
+    current_step: str
+    query: str
+    answer: str
 
-# Create a prompt template
+# Create prompt template
 prompt = PromptTemplate.from_template("""
 Answer the following question based on the provided context:
 
@@ -66,21 +68,48 @@ Question: {input}
 
 Answer:""")
 
-# Define the document chain with the prompt
-document_chain = create_stuff_documents_chain(
-    llm,
-    prompt=prompt
-)
+# Define node functions
+def retrieve(state: AgentState) -> AgentState:
+    """Retrieve relevant documents based on the query."""
+    docs = vectorstore.similarity_search(
+        state["query"],
+        k=int(os.getenv("RETRIEVER_K", "4"))
+    )
+    state["documents"] = docs
+    state["current_step"] = "generate"
+    return state
 
-qa_chain = create_retrieval_chain(retriever, document_chain)
+def generate(state: AgentState) -> AgentState:
+    """Generate answer using the retrieved documents."""
+    context = "\n".join([doc.page_content for doc in state["documents"]])
+    response = llm.invoke(
+        prompt.format(
+            context=context,
+            input=state["query"]
+        )
+    )
+    state["answer"] = response.content
+    state["current_step"] = "end"
+    return state
 
-# Simple reranker based on similarity scores
-def rerank_documents(docs, query, top_k=None):
-    if top_k is None:
-        top_k = int(os.getenv("RETRIEVER_K", "4"))
-    scores = [(doc, doc.metadata.get('score', 0)) for doc in docs]
-    scores.sort(key=lambda x: x[1], reverse=True)
-    return [doc for doc, score in scores[:top_k]]
+# Create the graph
+workflow = StateGraph(AgentState)
+
+# Add nodes
+workflow.add_node("retrieve", retrieve)
+workflow.add_node("generate", generate)
+
+# Add edges
+workflow.add_edge("retrieve", "generate")
+
+# Set entry point
+workflow.set_entry_point("retrieve")
+
+# Set end point
+workflow.set_finish_point("generate")
+
+# Compile the graph
+chain = workflow.compile()
 
 # Function to handle file uploads
 def handle_file_upload(file):
@@ -96,7 +125,7 @@ def handle_file_upload(file):
         loader = PyPDFLoader(temp_filename)
         documents = loader.load_and_split()
         
-        # Use the LangChain Qdrant wrapper to add documents
+        # Use the Qdrant wrapper to add documents
         vectorstore.add_documents(documents)
     finally:
         # Clean up the temporary file
@@ -118,12 +147,20 @@ for file in uploaded_files:
 # Chat interface
 query = st.text_input("Ask a question:")
 if st.button("Submit"):
-    docs = retriever.get_relevant_documents(query)
-    reranked_docs = rerank_documents(docs, query)
-    result = qa_chain.invoke({
-        "input": query
-    })
-    st.session_state.history.append((query, result['answer'], docs))
+    # Initialize state
+    state = {
+        "messages": [],
+        "documents": [],
+        "current_step": "retrieve",
+        "query": query,
+        "answer": ""
+    }
+    
+    # Run the graph
+    result = chain.invoke(state)
+    
+    # Add to history
+    st.session_state.history.append((query, result["answer"], result["documents"]))
     
 for query, answer, sources in st.session_state.history:
     st.markdown(f"**Question:** {query}")

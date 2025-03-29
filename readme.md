@@ -13,13 +13,15 @@ Vibe-RAG combines the power of large language models with efficient document ret
 - 🚀 **Fast Response Times:** Powered by Groq's high-performance LLM API
 - 🔒 **Secure Document Processing:** Your documents are processed securely and stored in Qdrant Cloud
 - 🤖 **Efficient Embeddings:** Uses HuggingFace's sentence-transformers for document embeddings
+- 📊 **Graph-Based Workflow:** Built with LangGraph for flexible and maintainable processing pipeline
 
 ## Technology Stack
 
 - **Frontend:** Streamlit
 - **Vector Database:** Qdrant Cloud
 - **Language Model:** Groq
-- **Document Processing:** LangChain
+- **Workflow Engine:** LangGraph
+- **Document Processing:** LangChain Community
 - **PDF Processing:** PyPDF2
 - **Embeddings:** HuggingFace (sentence-transformers) with all-MiniLM-L6-v2 model
 
@@ -90,7 +92,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Built with [LangChain](https://www.langchain.com/)
+- Built with [LangGraph](https://github.com/langchain-ai/langgraph) for workflow management
 - Vector storage powered by [Qdrant Cloud](https://cloud.qdrant.io/)
 - LLM API provided by [Groq](https://groq.com/)
 - UI framework by [Streamlit](https://streamlit.io/)
