@@ -186,7 +186,7 @@ def main():
     """Main Streamlit application interface."""
     st.title("Vibe-RAG")
 
-    # Initialize session state
+    # Initialize session staten
     if 'history' not in st.session_state:
         st.session_state.history = []
 
